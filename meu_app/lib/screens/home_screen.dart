@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
   final _dataService = DataService();
 
+  // Lista de páginas com títulos
   final List<Map<String, dynamic>> _pages = [
     {'title': '👤 Perfil', 'icon': Icons.person},
     {'title': '📊 Dashboard', 'icon': Icons.dashboard},
@@ -35,11 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
     {'title': '🎯 Clãs', 'icon': Icons.groups},
   ];
 
+  // Lista de telas - IMPORTANTE: ordem deve ser idêntica à lista _pages
   late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    // Inicializar as telas na mesma ordem das páginas
     _screens = [
       const ProfileScreen(),
       const DashboardScreen(),
@@ -53,146 +56,253 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _handleLogout() async {
-    await _authService.logout();
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+    // Mostrar diálogo de confirmação
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.primaryDark,
+        title: const Text('Sair', style: TextStyle(color: AppColors.cyan)),
+        content: const Text(
+          'Tem certeza que deseja sair?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sair', style: TextStyle(color: AppColors.neonRed)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await _authService.logout();
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
-    return Scaffold(
-      body: Row(
-        children: [
-          // Sidebar
-          Container(
-            width: 280,
-            decoration: BoxDecoration(
-              color: AppColors.primaryDark,
-              border: Border(
-                right: BorderSide(
-                  color: AppColors.cyan.withOpacity(0.3),
-                  width: 1,
-                ),
+    if (isMobile) {
+      // Layout mobile - abas na parte inferior
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(_pages[_currentIndex]['title']),
+          backgroundColor: AppColors.primaryDark,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout, color: AppColors.neonRed),
+              onPressed: _handleLogout,
+            ),
+          ],
+        ),
+        body: _screens[_currentIndex],
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: AppColors.primaryDark,
+            border: Border(
+              top: BorderSide(
+                color: AppColors.cyan.withOpacity(0.3),
+                width: 1,
               ),
             ),
-            child: Column(
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.cyan.withOpacity(0.3),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'GameLink',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (user != null)
-                        Text(
-                          user.username,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(
+                _pages.length,
+                (index) {
+                  final isSelected = _currentIndex == index;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => setState(() => _currentIndex = index),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.cyan.withOpacity(0.2)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            border: isSelected
+                                ? Border.all(color: AppColors.cyan, width: 1)
+                                : null,
                           ),
-                        ),
-                    ],
-                  ),
-                ),
-                // Menu Items
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _pages.length,
-                    itemBuilder: (context, index) {
-                      final isSelected = _currentIndex == index;
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.cyan.withOpacity(0.2)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          border: isSelected
-                              ? Border.all(
-                                  color: AppColors.cyan,
-                                  width: 1,
-                                )
-                              : null,
-                        ),
-                        child: ListTile(
-                          title: Text(
+                          child: Text(
                             _pages[index]['title'],
                             style: TextStyle(
-                              color: isSelected
-                                  ? AppColors.cyan
-                                  : AppColors.textSecondary,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
+                              color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              fontSize: 11,
                             ),
                           ),
-                          onTap: () {
-                            setState(() {
-                              _currentIndex = index;
-                            });
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                // Logout Button
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _handleLogout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.neonRed,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Sair',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.bold,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Layout desktop - menu lateral
+      return Scaffold(
+        body: Row(
+          children: [
+            // Sidebar
+            Container(
+              width: 280,
+              decoration: BoxDecoration(
+                color: AppColors.primaryDark,
+                border: Border(
+                  right: BorderSide(
+                    color: AppColors.cyan.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.cyan.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'GameLink',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (user != null) ...[
+                          Text(
+                            user.username,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            'Nível ${user.level}',
+                            style: const TextStyle(
+                              color: AppColors.cyan,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Menu Items
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _pages.length,
+                      itemBuilder: (context, index) {
+                        final isSelected = _currentIndex == index;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.cyan.withOpacity(0.2)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            border: isSelected
+                                ? Border.all(
+                                    color: AppColors.cyan,
+                                    width: 1,
+                                  )
+                                : null,
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              _pages[index]['title'],
+                              style: TextStyle(
+                                color: isSelected
+                                    ? AppColors.cyan
+                                    : AppColors.textSecondary,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _currentIndex = index;
+                              });
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Logout Button
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _handleLogout,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.neonRed,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Sair',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          // Main Content
-          Expanded(
-            child: Container(
-              color: AppColors.backgroundColor,
-              child: _screens[_currentIndex],
+            // Main Content
+            Expanded(
+              child: Container(
+                color: AppColors.backgroundColor,
+                child: _screens[_currentIndex],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
   }
 }
