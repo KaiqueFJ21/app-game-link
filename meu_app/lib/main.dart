@@ -1,550 +1,481 @@
-// =========================
-// MAIN.DART (ATUALIZADO)
-// =========================
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
-import 'screens/chat_screen.dart';
+import 'screens/register_screen.dart';
 
-void main() {
-  runApp(const GameLinkApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
 }
 
-class GameLinkApp extends StatelessWidget {
-  const GameLinkApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'GameLink',
-      theme: ThemeData.dark(),
-      home: const SplashScreen(),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFF00D9FF),
+        scaffoldBackgroundColor: const Color(0xFF0a0e27),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0a0e27),
+          elevation: 0,
+        ),
+      ),
+      home: const LoginScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
 
-// =========================
-// SPLASH SCREEN
-// =========================
-
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+/// Tela Home do GameLink
+/// 
+/// Tela principal após login com navegação por abas
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    verificarLogin();
-  }
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
 
-  void verificarLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("token");
-
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (token != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("GameLink")),
-    );
-  }
-}
-
-
-// =========================
-// NAVEGAÇÃO PRINCIPAL
-// =========================
-
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int paginaAtual = 0;
-
-  final List<Widget> paginas = [
-    const HomeScreen(),
+  final List<Widget> _screens = [
+    const DashboardScreen(),
+    const ChatScreen(),
     const RankingScreen(),
-    const AmigosScreen(),
-    const LojaScreen(),
-    const PerfilScreen(),
+    const ShopScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: paginas[paginaAtual],
+      body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: paginaAtual,
+        currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
-            paginaAtual = index;
+            _selectedIndex = index;
           });
         },
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xFF1a1a3e),
+        selectedItemColor: const Color(0xFF00D9FF),
+        unselectedItemColor: const Color(0xFF666666),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-          BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: ""),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: ""),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: ""),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.leaderboard),
+            label: 'Ranking',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: 'Loja',
+          ),
         ],
       ),
     );
   }
 }
 
-// =========================
-// HOME (TELA PRINCIPAL BONITA)
-// =========================
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+/// Tela de Dashboard/Home
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0D0D0D),
-            Color(0xFF1A1A2E),
-            Color(0xFF2A0F1F),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('GameLink'),
+        centerTitle: true,
       ),
-      child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
-              child: Text(
-                "MENU",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // =========================
-            // JOGOS RECENTES
-            // =========================
-            const SectionTitle("JOGOS RECENTES"),
-
-            SizedBox(
-              height: 140,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return GameCard();
-                },
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // =========================
-            // PROGRESSO
-            // =========================
-            const SectionTitle("PROGRESSO DIÁRIO"),
-
+            // Bem-vindo
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.blueAccent),
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF00D9FF),
+                    const Color(0xFF00FF88),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("PROGRESSO DIÁRIO"),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: 0.51,
-                      minHeight: 10,
-                      backgroundColor: Colors.grey,
-                      valueColor: AlwaysStoppedAnimation(Colors.purpleAccent),
+                  const Text(
+                    'Bem-vindo ao GameLink!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  const Text("51%"),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'A arena gamer no seu celular',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                    ),
+                    child: const Text(
+                      'Sair',
+                      style: TextStyle(
+                        color: Color(0xFF00D9FF),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 20),
-
-            // =========================
-            // ATIVIDADES
-            // =========================
-            const SectionTitle("ATIVIDADES RECENTES"),
-
-            Column(
-              children: const [
-                ActivityItem("Jogou Assassin’s Creed", "Há 5 horas"),
-                ActivityItem("Subiu de ranking no CS2", "Há 1 dia"),
-                ActivityItem("Adicionou novo amigo", "Há 2 dias"),
-              ],
+            const SizedBox(height: 24),
+            // Estatísticas
+            const Text(
+              'Suas Estatísticas',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// =========================
-// COMPONENTES REUTILIZÁVEIS
-// =========================
-
-class SectionTitle extends StatelessWidget {
-  final String texto;
-
-  const SectionTitle(this.texto, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          texto,
-          style: const TextStyle(
-            color: Colors.redAccent,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class GameCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.grey[900],
-        boxShadow: [
-          BoxShadow(
-            color: Colors.purple.withOpacity(0.5),
-            blurRadius: 10,
-          )
-        ],
-      ),
-      child: const Center(
-        child: Icon(Icons.videogame_asset, size: 40),
-      ),
-    );
-  }
-}
-
-class ActivityItem extends StatelessWidget {
-  final String titulo;
-  final String tempo;
-
-  const ActivityItem(this.titulo, this.tempo, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.circle, size: 12),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 12),
+            Row(
               children: [
-                Text(titulo),
-                Text(
-                  tempo,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Nível',
+                    value: '25',
+                    icon: '⭐',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Vitórias',
+                    value: '150',
+                    icon: '🏆',
+                  ),
                 ),
               ],
             ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-// =========================
-// RANKING
-// =========================
-
-class RankingScreen extends StatelessWidget {
-  const RankingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBackground(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Center(
-            child: Text("RANKING", style: TextStyle(fontSize: 24)),
-          ),
-          const SizedBox(height: 20),
-
-          ...List.generate(10, (index) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purpleAccent),
-              ),
-              child: Row(
-                children: [
-                  Text("#${index + 1}",
-                      style: const TextStyle(color: Colors.white)),
-                  const SizedBox(width: 10),
-                  const CircleAvatar(
-                    backgroundColor: Colors.purple,
-                    child: Icon(Icons.person),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    title: 'Taxa de Vitória',
+                    value: '75%',
+                    icon: '📊',
                   ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text("Player Gamer"),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Ranking',
+                    value: '#245',
+                    icon: '📈',
                   ),
-                  const Text("2500 pts",
-                      style: TextStyle(color: Colors.pinkAccent))
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Seção de Desafios
+            const Text(
+              'Desafios Ativos',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-            );
-          })
-        ],
-      ),
-    );
-  }
-}
-
-// =========================
-// AMIGOS
-// =========================
-
-class AmigosScreen extends StatelessWidget {
-  const AmigosScreen({super.key});
-
-  
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBackground(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Center(child: Text("AMIGOS", style: TextStyle(fontSize: 24))),
-          const SizedBox(height: 20),
-
-          ...List.generate(8, (index) {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(nome: "Amigo Gamer"),
-        ),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.person),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(child: Text("Amigo Gamer")),
-          Icon(Icons.circle,
-              size: 10,
-              color: index % 2 == 0
-                  ? Colors.green
-                  : Colors.grey)
-        ],
-      ),
-    ),
-  );
-})
-        ],
-      ),
-    );
-  }
-}
-
-
-// =========================
-// LOJA
-// =========================
-
-class LojaScreen extends StatelessWidget {
-  const LojaScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBackground(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Center(child: Text("LOJA", style: TextStyle(fontSize: 24))),
-          const SizedBox(height: 20),
-
-          ...["100 Créditos", "500 Créditos", "1000 Créditos"].map((item) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
+            ),
+            const SizedBox(height: 12),
+            Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: const LinearGradient(
-                  colors: [Colors.purple, Colors.pink],
+                color: const Color(0xFF1a1a3e),
+                border: Border.all(
+                  color: const Color(0xFF00D9FF),
+                  width: 1.5,
                 ),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item),
-                  ElevatedButton(
-                    onPressed: () {},
-                    child: const Text("Comprar"),
-                  )
+                  const Text(
+                    'Torneio 1v1 Valorant',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Competição de 1v1 no mapa Ascent',
+                    style: TextStyle(
+                      color: Color(0xFF999999),
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Recompensa',
+                            style: TextStyle(
+                              color: Color(0xFF999999),
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            '500 Créditos',
+                            style: TextStyle(
+                              color: Color(0xFF00FF88),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00D9FF),
+                        ),
+                        child: const Text(
+                          'Participar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            );
-          })
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// =========================
-// PERFIL
-// =========================
+/// Card de Estatística
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String icon;
 
-class PerfilScreen extends StatelessWidget {
-  const PerfilScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBackground(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Center(child: Text("PERFIL", style: TextStyle(fontSize: 24))),
-          const SizedBox(height: 20),
-
-          const CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.purple,
-            child: Icon(Icons.person, size: 40),
-          ),
-
-          const SizedBox(height: 10),
-
-          const Center(child: Text("PlayerX")),
-          const SizedBox(height: 20),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Estatísticas"),
-                SizedBox(height: 10),
-                Text("K/D: 1.8"),
-                Text("Winrate: 62%"),
-                Text("Ranking: Diamante"),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-
-// =========================
-// BACKGROUND PADRÃO (REUTILIZÁVEL)
-// =========================
-
-class AppBackground extends StatelessWidget {
-  final Widget child;
-
-  const AppBackground({super.key, required this.child});
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0D0D0D),
-            Color(0xFF1A1A2E),
-            Color(0xFF2A0F1F),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1a1a3e),
+        border: Border.all(
+          color: const Color(0xFF00D9FF),
+          width: 1.5,
         ),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: SafeArea(child: child),
+      child: Column(
+        children: [
+          Text(
+            icon,
+            style: const TextStyle(fontSize: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF00D9FF),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF999999),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
+/// Tela de Chat
+class ChatScreen extends StatelessWidget {
+  const ChatScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Chat'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.chat,
+              size: 64,
+              color: Color(0xFF00D9FF),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Chat em Desenvolvimento',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Em breve você poderá conversar com seus amigos',
+              style: TextStyle(
+                color: Color(0xFF999999),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tela de Ranking
+class RankingScreen extends StatelessWidget {
+  const RankingScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ranking'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.leaderboard,
+              size: 64,
+              color: Color(0xFF00FF88),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Ranking em Desenvolvimento',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Veja o ranking global de jogadores',
+              style: TextStyle(
+                color: Color(0xFF999999),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tela de Loja
+class ShopScreen extends StatelessWidget {
+  const ShopScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Loja'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.shopping_bag,
+              size: 64,
+              color: Color(0xFFFF1744),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Loja em Desenvolvimento',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Compre itens exclusivos com créditos',
+              style: TextStyle(
+                color: Color(0xFF999999),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
